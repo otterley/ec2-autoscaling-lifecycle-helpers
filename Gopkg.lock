@@ -14,7 +14,7 @@
   version = "v1.6.0"
 
 [[projects]]
-  digest = "1:626be779366cb7192178fd8ac4ee188b26b17a767278f440eaab9f016c4b6556"
+  digest = "1:4a011f80426db641404def4d9bd3223655def8dc79c91175b866398bff09651d"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -51,8 +51,8 @@
     "service/sts",
   ]
   pruneopts = "UT"
-  revision = "e21dfa909e14ce93f88f1f3505764bc4952a11be"
-  version = "v1.15.18"
+  revision = "9b02f79e8b963274a4ca7a1468fa57d6e3f87363"
+  version = "v1.15.20"
 
 [[projects]]
   digest = "1:5abd6a22805b1919f6a6bca0ae58b13cef1f3412812f38569978f43ef02743d4"
@@ -68,6 +68,14 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "0b12d6b5"
+
+[[projects]]
+  branch = "master"
+  digest = "1:357aa2e2a73c9a503879220a0de8eedd69f13528e28c52727d010f72a7c4018c"
+  name = "github.com/otterley/rollerbot-aws"
+  packages = ["internal"]
+  pruneopts = "UT"
+  revision = "b0889082cf61bd61d9b523a86e47a0d0f5468b38"
 
 [[projects]]
   digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
@@ -88,6 +96,7 @@
     "github.com/aws/aws-sdk-go/service/autoscaling",
     "github.com/aws/aws-sdk-go/service/ecs",
     "github.com/aws/aws-sdk-go/service/sfn",
+    "github.com/otterley/rollerbot-aws/internal",
     "github.com/pkg/errors",
   ]
   solver-name = "gps-cdcl"
