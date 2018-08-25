@@ -5,11 +5,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sfn"
-	"github.com/otterley/rollerbot-aws/internal"
+	"github.com/otterley/ec2-autoscaling-lifecycle-helpers/internal"
 	"github.com/pkg/errors"
 )
 
-func countRunningExecutions(request internal.RollerParameters) (response internal.RollerParameters, err error) {
+func countRunningExecutions(request internal.DrainParameters) (response internal.DrainParameters, err error) {
 	response = request
 	response.RunningExecutionCount = 0
 

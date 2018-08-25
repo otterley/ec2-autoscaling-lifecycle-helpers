@@ -22,6 +22,8 @@ func startECSInstanceDrainer(request internal.DrainParameters) error {
 
 	drainParameters := request
 
+	fmt.Printf("%+v\n", request)
+
 	drainParameters.StateMachineARN = os.Getenv("STATE_MACHINE_ARN")
 	if drainParameters.StateMachineARN == "" {
 		return errors.New("STATE_MACHINE_ARN environment variable not defined")

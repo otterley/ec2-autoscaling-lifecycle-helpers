@@ -4,7 +4,6 @@ resource "aws_cloudwatch_event_rule" "terminating" {
 
   event_pattern = <<PATTERN
 {
-    "source": "aws.autoscaling",
     "detail-type": [ "EC2 Instance-terminate Lifecycle Action" ],
     "detail": {
         "AutoScalingGroupName": [ "${var.autoscaling_group_name}" ]

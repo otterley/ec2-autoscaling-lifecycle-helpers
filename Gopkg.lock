@@ -14,7 +14,7 @@
   version = "v1.6.0"
 
 [[projects]]
-  digest = "1:4a011f80426db641404def4d9bd3223655def8dc79c91175b866398bff09651d"
+  digest = "1:4876c6af6be1a842a2d7cea766f6defc994955d0e04bc3ea27f17cf2f52ed2ca"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -46,13 +46,22 @@
     "private/protocol/rest",
     "private/protocol/xml/xmlutil",
     "service/autoscaling",
+    "service/cloudwatchevents",
     "service/ecs",
     "service/sfn",
     "service/sts",
   ]
   pruneopts = "UT"
-  revision = "9b02f79e8b963274a4ca7a1468fa57d6e3f87363"
-  version = "v1.15.20"
+  revision = "4324bc9d8865bdb3e6aa86ec7772ca1272d2750e"
+  version = "v1.15.21"
+
+[[projects]]
+  digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  pruneopts = "UT"
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
 
 [[projects]]
   digest = "1:5abd6a22805b1919f6a6bca0ae58b13cef1f3412812f38569978f43ef02743d4"
@@ -63,19 +72,25 @@
   version = "v1.38.2"
 
 [[projects]]
+  digest = "1:e9c6ba1df4e7953669dd5c2b13f6ce239ce2a7e76c498504368969b3eec87821"
+  name = "github.com/gruntwork-io/terratest"
+  packages = [
+    "modules/collections",
+    "modules/logger",
+    "modules/retry",
+    "modules/shell",
+    "modules/terraform",
+  ]
+  pruneopts = "UT"
+  revision = "d800338b3e88d65e5a434ec9a6ab1242270edda6"
+  version = "v0.10.0"
+
+[[projects]]
   digest = "1:e22af8c7518e1eab6f2eab2b7d7558927f816262586cd6ed9f349c97a6c285c4"
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
   pruneopts = "UT"
   revision = "0b12d6b5"
-
-[[projects]]
-  branch = "master"
-  digest = "1:357aa2e2a73c9a503879220a0de8eedd69f13528e28c52727d010f72a7c4018c"
-  name = "github.com/otterley/rollerbot-aws"
-  packages = ["internal"]
-  pruneopts = "UT"
-  revision = "b0889082cf61bd61d9b523a86e47a0d0f5468b38"
 
 [[projects]]
   digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
@@ -84,6 +99,30 @@
   pruneopts = "UT"
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
+
+[[projects]]
+  digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  pruneopts = "UT"
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
+  digest = "1:18752d0b95816a1b777505a97f71c7467a8445b8ffb55631a7bf779f6ba4fa83"
+  name = "github.com/stretchr/testify"
+  packages = ["assert"]
+  pruneopts = "UT"
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
+
+[[projects]]
+  branch = "master"
+  digest = "1:76ee51c3f468493aff39dbacc401e8831fbb765104cbf613b89bef01cf4bad70"
+  name = "golang.org/x/net"
+  packages = ["context"]
+  pruneopts = "UT"
+  revision = "4bcd98cce591d8c7061bf313d7a3cbad05b58549"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -94,10 +133,12 @@
     "github.com/aws/aws-sdk-go/aws/client",
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/autoscaling",
+    "github.com/aws/aws-sdk-go/service/cloudwatchevents",
     "github.com/aws/aws-sdk-go/service/ecs",
     "github.com/aws/aws-sdk-go/service/sfn",
-    "github.com/otterley/rollerbot-aws/internal",
+    "github.com/gruntwork-io/terratest/modules/terraform",
     "github.com/pkg/errors",
+    "github.com/stretchr/testify/assert",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

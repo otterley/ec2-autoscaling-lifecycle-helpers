@@ -51,12 +51,6 @@ data "aws_iam_policy_document" "start_drainer_policy" {
     ]
 
     resources = ["*"]
-
-    condition {
-      test     = "ArnLike"
-      variable = "ecs:cluster"
-      values   = ["arn:aws:ecs:*:*:cluster/${coalesce(var.ecs_cluster_name, var.autoscaling_group_name)}"]
-    }
   }
 
   statement {
@@ -64,7 +58,7 @@ data "aws_iam_policy_document" "start_drainer_policy" {
       "ecs:ListContainerInstances",
     ]
 
-    resources = ["arn:aws:ecs:*:*:cluster/${coalesce(var.ecs_cluster_name, var.autoscaling_group_name)}"]
+    resources = ["*"]
   }
 
   statement {

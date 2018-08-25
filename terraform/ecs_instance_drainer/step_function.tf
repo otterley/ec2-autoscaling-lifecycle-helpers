@@ -114,7 +114,7 @@ data "aws_iam_policy_document" "drainer_policy" {
       "${aws_lambda_function.count_running_executions.arn}",
       "${aws_lambda_function.check_deadline.arn}",
       "${aws_lambda_function.count_ecs_tasks.arn}",
-      "${aws_lambda_function.compete_lifecycle_action.arn}",
+      "${aws_lambda_function.complete_lifecycle_action.arn}",
       "${aws_lambda_function.record_lifecycle_heartbeat.arn}",
     ]
   }

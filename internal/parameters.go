@@ -17,6 +17,9 @@ type DrainParameters struct {
 	ECSCluster      string
 	ECSTaskCount    int
 
+	// Added by counter
+	RunningExecutionCount int
+
 	// Added by Step Function
 	Params map[string]string
 }

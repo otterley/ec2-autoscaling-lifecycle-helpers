@@ -33,7 +33,7 @@ data "aws_iam_policy_document" "record_lifecycle_heartbeat_policy" {
 
   statement {
     actions   = ["autoscaling:RecordLifecycleActionHeartbeat"]
-    resources = ["arn:aws:autoscaling:*:*:autoScalingGroup:*:autoScalingGroupName/${var.autoscaling_group_name}"]
+    resources = ["*"]
   }
 }
 

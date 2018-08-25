@@ -34,7 +34,7 @@ data "aws_ami" "amazon_linux" {
 
   filter {
     name   = "name"
-    values = ["amzn-ami-hvm-*-x86_64-gp2"]
+    values = ["amzn-ami-*-amazon-ecs-optimized"]
   }
 
   filter {
@@ -68,6 +68,7 @@ resource "aws_iam_role_policy" "ecs_instance" {
   role = "${aws_iam_role.ecs_instance.id}"
 
   policy = <<EOF
+{
   "Version": "2012-10-17",
   "Statement": [
     {
@@ -90,29 +91,42 @@ resource "aws_iam_role_policy" "ecs_instance" {
       "Resource": "*"
     }
   ]
+}
 EOF
 }
 
 resource "aws_iam_instance_profile" "ecs_instance" {
-  name = "test-ecs-instance-drainer-instance-profile"
+  name = "test-ecs-instance-drainer"
   role = "${aws_iam_role.ecs_instance.id}"
+}
+
+resource "aws_launch_configuration" "ecs_instance" {
+  name     = "test-ecs-instance-drainer"
+  image_id = "${data.aws_ami.amazon_linux.image_id}"
+
+  iam_instance_profile        = "${aws_iam_instance_profile.ecs_instance.id}"
+  security_groups             = ["${module.security_group.this_security_group_id}"]
+  instance_type               = "t2.micro"
+  associate_public_ip_address = false
+
+  user_data = <<EOF
+#!/bin/bash
+echo ECS_CLUSTER=${aws_ecs_cluster.test.name} >> /etc/ecs/ecs.config
+EOF
 }
 
 module "asg" {
   source  = "terraform-aws-modules/autoscaling/aws"
-  version = "2.7.0"
+  version = "2.8.0"
 
-  name                        = "test-ecs-instance-drainer"
-  image_id                    = "${data.aws_ami.amazon_linux.image_id}"
-  instance_type               = "t2.micro"
-  health_check_type           = "EC2"
-  security_groups             = ["${module.security_group.this_security_group_id}"]
-  vpc_zone_identifier         = ["${module.vpc.public_subnets}"]
-  associate_public_ip_address = false
-  iam_instance_profile        = "${aws_iam_instance_profile.ecs_instance.id}"
+  name                 = "test-ecs-instance-drainer"
+  health_check_type    = "EC2"
+  vpc_zone_identifier  = ["${module.vpc.public_subnets}"]
+  create_lc            = false
+  launch_configuration = "${aws_launch_configuration.ecs_instance.id}"
 
   desired_capacity = 2
-  min_size         = 2
+  min_size         = 1
   max_size         = 2
 
   wait_for_capacity_timeout = 0
@@ -128,10 +142,11 @@ resource "aws_ecs_task_definition" "test" {
   container_definitions = <<EOF
 [
   {
+    "name": "webserver",
     "image": "nginx:1.14.0-alpine",
-    "cpu": "512",
+    "cpu": 512,
     "essential": true,
-    "memory": "256"
+    "memory": 256
   }
 ]
 EOF
@@ -164,5 +179,9 @@ output "step_function_arn" {
 }
 
 output "autoscaling_group_name" {
-  value = "${module.drainer.this_autoscaling_group_name}"
+  value = "${module.asg.this_autoscaling_group_name}"
+}
+
+output "ecs_cluster_name" {
+  value = "${aws_ecs_cluster.test.name}"
 }

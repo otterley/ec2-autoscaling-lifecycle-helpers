@@ -1,6 +1,3 @@
-export GOOS := linux
-export GOARCH := amd64
-
 S3BUCKET := ec2-instance-lifecycle
 VERSION := $(shell git describe --tags --always)
 
@@ -8,6 +5,8 @@ PROGS := $(subst cmd/,,$(wildcard cmd/*))
 
 zip: $(patsubst %,dist/%.zip,$(PROGS))
 
+bin/%: export GOOS := linux
+bin/%: export GOARCH := amd64
 bin/%: ./cmd/%/main.go internal/*.go
 	go build -o $@ $<
 
