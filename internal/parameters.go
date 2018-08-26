@@ -1,5 +1,9 @@
 package internal
 
+type CloudwatchEvent struct {
+	Detail DrainParameters `json:"detail"`
+}
+
 type DrainParameters struct {
 	// These come directly from the CloudWatch Event -- see
 	// https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/EventTypes.html#auto_scaling_event_types

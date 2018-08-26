@@ -17,12 +17,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-func startECSInstanceDrainer(request internal.DrainParameters) error {
+func startECSInstanceDrainer(event internal.CloudwatchEvent) error {
 	var err error
 
-	drainParameters := request
-
-	fmt.Printf("%+v\n", request)
+	drainParameters := event.Detail
 
 	drainParameters.StateMachineARN = os.Getenv("STATE_MACHINE_ARN")
 	if drainParameters.StateMachineARN == "" {
@@ -44,12 +42,12 @@ func startECSInstanceDrainer(request internal.DrainParameters) error {
 	drainParameters.Deadline = time.Now().Add(timeout).Format(time.RFC3339)
 
 	sess := session.Must(session.NewSession())
-	drainParameters.ECSInstanceID, err = internal.GetECSInstanceARN(sess, request.ECSCluster, request.AutoScalingGroupName)
+	drainParameters.ECSInstanceID, err = internal.GetECSInstanceARN(sess, drainParameters.ECSCluster, drainParameters.EC2InstanceID)
 	if err != nil {
 		return errors.WithMessage(err, "GetECSInstanceARN")
 	}
 	if drainParameters.ECSInstanceID == "" {
-		return errors.Errorf("No ECS instance ID in cluster %s found for EC2 instance ID %s", request.ECSCluster, request.EC2InstanceID)
+		return fmt.Errorf("No ECS instance matching EC2 instance ID %s found in cluster %s", drainParameters.EC2InstanceID, drainParameters.ECSCluster)
 	}
 
 	fmt.Printf("Setting ECS instance %s on cluster %s to DRAINING state\n", drainParameters.ECSInstanceID, drainParameters.ECSCluster)
@@ -68,7 +66,7 @@ func startECSInstanceDrainer(request internal.DrainParameters) error {
 	switch strings.ToLower(os.Getenv("STOP_ALL_NON_SERVICE_TASKS")) {
 	case "1", "true", "t", "yes", "y":
 		fmt.Printf("Stopping all non-service tasks on ECS instance %s in cluster %s\n", drainParameters.ECSInstanceID, drainParameters.ECSCluster)
-		if err := stopAllNonServiceTasks(sess, request.ECSCluster, drainParameters.ECSInstanceID); err != nil {
+		if err := stopAllNonServiceTasks(sess, drainParameters.ECSCluster, drainParameters.ECSInstanceID); err != nil {
 			return errors.WithMessage(err, "stopAllNonServiceTasks")
 		}
 	}
@@ -76,7 +74,7 @@ func startECSInstanceDrainer(request internal.DrainParameters) error {
 	groups := strings.Split(os.Getenv("STOP_TASK_GROUPS"), ",")
 	if len(groups) > 0 {
 		fmt.Printf("Stopping tasks in groups %s on ECS instance %s in cluster %s\n", os.Getenv("STOP_TASK_GROUPS"), drainParameters.ECSInstanceID, drainParameters.ECSCluster)
-		if err := stopTaskGroups(sess, request.ECSCluster, drainParameters.ECSInstanceID, groups); err != nil {
+		if err := stopTaskGroups(sess, drainParameters.ECSCluster, drainParameters.ECSInstanceID, groups); err != nil {
 			return errors.WithMessage(err, "stopTaskGroups")
 		}
 	}

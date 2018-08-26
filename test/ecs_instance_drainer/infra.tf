@@ -185,3 +185,7 @@ output "autoscaling_group_name" {
 output "ecs_cluster_name" {
   value = "${aws_ecs_cluster.test.name}"
 }
+
+output "ecs_task_family" {
+  value = "${aws_ecs_task_definition.test.family}"
+}
