@@ -9,22 +9,17 @@ variable "ecs_cluster_name" {
 }
 
 variable "wait_interval" {
-  description = "Number of seconds to wait between counting ECS tasks"
+  description = "Number of seconds to wait between poll attempts"
   default     = "30"
 }
 
 variable "timeout" {
-  description = "Timeout after which instance will be terminated even if not drained, as a Go duration string"
+  description = "Timeout after which instance will be terminated if not ready, as a Go duration string"
   default     = "5m"
 }
 
-variable "stop_all_non_service_tasks" {
-  description = "If true, stop all non-service tasks immediately"
-  default     = "true"
-}
-
-variable "stop_task_groups" {
-  description = "List of ECS task groups to stop immediately"
+variable "required_task_families" {
+  description = "List of ECS task families that must also have at least 1 task running on instance"
   default     = []
 }
 

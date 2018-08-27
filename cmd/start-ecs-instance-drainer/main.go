@@ -17,18 +17,18 @@ import (
 	"github.com/pkg/errors"
 )
 
-func startECSInstanceDrainer(event internal.CloudwatchEvent) error {
+func startECSInstanceDrainer(event internal.StartDrainEvent) error {
 	var err error
 
-	drainParameters := event.Detail
+	params := event.Detail
 
-	drainParameters.StateMachineARN = os.Getenv("STATE_MACHINE_ARN")
-	if drainParameters.StateMachineARN == "" {
+	params.StateMachineARN = os.Getenv("STATE_MACHINE_ARN")
+	if params.StateMachineARN == "" {
 		return errors.New("STATE_MACHINE_ARN environment variable not defined")
 	}
 
-	drainParameters.ECSCluster = os.Getenv("ECS_CLUSTER")
-	if drainParameters.ECSCluster == "" {
+	params.ECSCluster = os.Getenv("ECS_CLUSTER")
+	if params.ECSCluster == "" {
 		return errors.New("ECS_CLUSTER environment variable not defined")
 	}
 
@@ -39,24 +39,24 @@ func startECSInstanceDrainer(event internal.CloudwatchEvent) error {
 			return err
 		}
 	}
-	drainParameters.Deadline = time.Now().Add(timeout).Format(time.RFC3339)
+	params.Deadline = time.Now().Add(timeout).Format(time.RFC3339)
 
 	sess := session.Must(session.NewSession())
-	drainParameters.ECSInstanceID, err = internal.GetECSInstanceARN(sess, drainParameters.ECSCluster, drainParameters.EC2InstanceID)
+	params.ECSInstanceID, err = internal.GetECSInstanceARN(sess, params.ECSCluster, params.EC2InstanceID)
 	if err != nil {
 		return errors.WithMessage(err, "GetECSInstanceARN")
 	}
-	if drainParameters.ECSInstanceID == "" {
-		return fmt.Errorf("No ECS instance matching EC2 instance ID %s found in cluster %s", drainParameters.EC2InstanceID, drainParameters.ECSCluster)
+	if params.ECSInstanceID == "" {
+		return fmt.Errorf("No ECS instance matching EC2 instance ID %s found in cluster %s", params.EC2InstanceID, params.ECSCluster)
 	}
 
-	fmt.Printf("Setting ECS instance %s on cluster %s to DRAINING state\n", drainParameters.ECSInstanceID, drainParameters.ECSCluster)
+	fmt.Printf("Setting ECS instance %s on cluster %s to DRAINING state\n", params.ECSInstanceID, params.ECSCluster)
 
 	ecsClient := ecs.New(sess)
 	if _, err := ecsClient.UpdateContainerInstancesState(
 		&ecs.UpdateContainerInstancesStateInput{
-			Cluster:            aws.String(drainParameters.ECSCluster),
-			ContainerInstances: aws.StringSlice([]string{drainParameters.ECSInstanceID}),
+			Cluster:            aws.String(params.ECSCluster),
+			ContainerInstances: aws.StringSlice([]string{params.ECSInstanceID}),
 			Status:             aws.String("DRAINING"),
 		},
 	); err != nil {
@@ -65,16 +65,16 @@ func startECSInstanceDrainer(event internal.CloudwatchEvent) error {
 
 	switch strings.ToLower(os.Getenv("STOP_ALL_NON_SERVICE_TASKS")) {
 	case "1", "true", "t", "yes", "y":
-		fmt.Printf("Stopping all non-service tasks on ECS instance %s in cluster %s\n", drainParameters.ECSInstanceID, drainParameters.ECSCluster)
-		if err := stopAllNonServiceTasks(sess, drainParameters.ECSCluster, drainParameters.ECSInstanceID); err != nil {
+		fmt.Printf("Stopping all non-service tasks on ECS instance %s in cluster %s\n", params.ECSInstanceID, params.ECSCluster)
+		if err := stopAllNonServiceTasks(sess, params.ECSCluster, params.ECSInstanceID); err != nil {
 			return errors.WithMessage(err, "stopAllNonServiceTasks")
 		}
 	}
 
 	groups := strings.Split(os.Getenv("STOP_TASK_GROUPS"), ",")
 	if len(groups) > 0 {
-		fmt.Printf("Stopping tasks in groups %s on ECS instance %s in cluster %s\n", os.Getenv("STOP_TASK_GROUPS"), drainParameters.ECSInstanceID, drainParameters.ECSCluster)
-		if err := stopTaskGroups(sess, drainParameters.ECSCluster, drainParameters.ECSInstanceID, groups); err != nil {
+		fmt.Printf("Stopping tasks in groups %s on ECS instance %s in cluster %s\n", os.Getenv("STOP_TASK_GROUPS"), params.ECSInstanceID, params.ECSCluster)
+		if err := stopTaskGroups(sess, params.ECSCluster, params.ECSInstanceID, groups); err != nil {
 			return errors.WithMessage(err, "stopTaskGroups")
 		}
 	}
@@ -82,7 +82,7 @@ func startECSInstanceDrainer(event internal.CloudwatchEvent) error {
 	startTime := time.Now()
 	executionName := startTime.Format("20060102T150405Z0700")
 
-	sfnInput, err := json.Marshal(drainParameters)
+	sfnInput, err := json.Marshal(params)
 	if err != nil {
 		return errors.WithMessage(err, "Error marshaling JSON")
 	}
@@ -90,14 +90,14 @@ func startECSInstanceDrainer(event internal.CloudwatchEvent) error {
 	sfnClient := sfn.New(sess)
 	_, err = sfnClient.StartExecution(&sfn.StartExecutionInput{
 		Name:            aws.String(executionName),
-		StateMachineArn: aws.String(drainParameters.StateMachineARN),
+		StateMachineArn: aws.String(params.StateMachineARN),
 		Input:           aws.String(string(sfnInput)),
 	})
 	if err != nil {
 		return errors.WithMessage(err, "StartExecution")
 	}
 
-	fmt.Printf("Started Step Function %s with execution name %s\n", drainParameters.StateMachineARN, executionName)
+	fmt.Printf("Started Step Function %s with execution name %s\n", params.StateMachineARN, executionName)
 	fmt.Printf("Input:\n%s\n", sfnInput)
 	return nil
 }

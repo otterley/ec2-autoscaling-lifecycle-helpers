@@ -68,7 +68,7 @@ data "aws_iam_policy_document" "start_drainer_policy" {
 }
 
 resource "aws_iam_role" "start_drainer" {
-  name               = "${format("%.64s", "start-drainer-${var.autoscaling_group_name}")}"
+  name               = "${format("%.64s", "start-ecs-inst-drain-${var.autoscaling_group_name}")}"
   assume_role_policy = "${data.aws_iam_policy_document.start_drainer_assume_role.json}"
 }
 

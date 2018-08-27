@@ -22,3 +22,6 @@ upload: zip
 
 test_ecs_instance_drainer:
 	LAMBDA_VERSION=$(VERSION) go test -v -timeout 30m ./test/ecs_instance_drainer
+
+test_ecs_instance_ready:
+	LAMBDA_VERSION=$(VERSION) go test -v -timeout 30m ./test/ecs_instance_ready
