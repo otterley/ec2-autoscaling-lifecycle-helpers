@@ -189,3 +189,7 @@ output "ecs_cluster_name" {
 output "ecs_task_family" {
   value = "${aws_ecs_task_definition.test.family}"
 }
+
+output "desired_instance_count" {
+  value = "${module.asg.this_autoscaling_group_desired_capacity}"
+}

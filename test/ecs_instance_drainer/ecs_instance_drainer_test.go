@@ -3,6 +3,7 @@ package ecs_instance_drainer_test
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -32,21 +33,29 @@ func TestECSInstanceDrainer(t *testing.T) {
 	autoScalingGroupName := terraform.Output(t, tfOpts, "autoscaling_group_name")
 	ecsCluster := terraform.Output(t, tfOpts, "ecs_cluster_name")
 
+	desiredInstanceCount, err := strconv.Atoi(terraform.Output(t, tfOpts, "desired_instance_count"))
+	assert.NoError(t, err)
+
 	t.Run("Cloudwatch Event Connected",
 		testCloudwatchEventConnected(ctx, terraform.Output(t, tfOpts, "start_drainer_lambda_arn")))
 
-	if err := setASGDesiredCapacity(ctx, autoScalingGroupName, 1); err != nil {
-		t.Fatal(err)
-	}
+	t.Run("Instance joined ECS cluster", testInstanceJoinedECSCluster(ctx, ecsCluster, desiredInstanceCount))
 
-	t.Run("Instance joined ECS cluster", testInstanceJoinedECSCluster(ctx, ecsCluster, 2))
+	err = setASGDesiredCapacity(ctx, autoScalingGroupName, 1)
+	assert.NoError(t, err)
+
+	t.Run("Instance transitions to Terminating:Wait state", testInstanceTransition(ctx, autoScalingGroupName, "Terminating:Wait"))
 
 	t.Run("Step Function Started",
 		testStepFunctionStarted(ctx, terraform.Output(t, tfOpts, "step_function_arn")))
 
 	t.Run("ECS Instance Starts Draining", testECSInstanceDraining(ctx, ecsCluster))
 
-	t.Run("Task count reduced", testTaskCountBelow(ctx, ecsCluster, terraform.Output(t, tfOpts, "ecs_task_family"), 2))
+	t.Run("All tasks stopped on drained instances", testNoTasksOnDrainingInstance(ctx, ecsCluster))
+
+	t.Run("Instance transitions to Terminating:Proceed state", testInstanceTransition(ctx, autoScalingGroupName, "Terminating:Proceed"))
+
+	t.Run("Instance count reduced", testInstanceCountBelow(ctx, autoScalingGroupName, desiredInstanceCount))
 }
 
 func setASGDesiredCapacity(ctx context.Context, autoScalingGroupName string, desiredCapacity int64) error {
@@ -186,22 +195,37 @@ func testECSInstanceDraining(ctx context.Context, cluster string) func(t *testin
 	}
 }
 
-func testTaskCountBelow(ctx context.Context, cluster, family string, count int) func(t *testing.T) {
+func testNoTasksOnDrainingInstance(ctx context.Context, cluster string) func(t *testing.T) {
 	return func(t *testing.T) {
 		client := ecs.New(session.Must(session.NewSession()))
 
 		for {
-			output, err := client.ListTasksWithContext(
+			var runningTasksCount int64
+
+			output, err := client.ListContainerInstancesWithContext(
 				ctx,
-				&ecs.ListTasksInput{
+				&ecs.ListContainerInstancesInput{
 					Cluster: aws.String(cluster),
-					Family:  aws.String(family),
+					Status:  aws.String("DRAINING"),
 				},
 			)
 			assert.NoError(t, err)
 
-			fmt.Printf("Task count for family %s: %d\n", family, len(output.TaskArns))
-			if len(output.TaskArns) < count {
+			tasks, err := client.DescribeContainerInstancesWithContext(
+				ctx,
+				&ecs.DescribeContainerInstancesInput{
+					Cluster:            aws.String(cluster),
+					ContainerInstances: output.ContainerInstanceArns,
+				},
+			)
+			assert.NoError(t, err)
+
+			for _, instance := range tasks.ContainerInstances {
+				runningTasksCount += aws.Int64Value(instance.RunningTasksCount)
+			}
+
+			fmt.Printf("Task count on DRAINING instances in cluster %s: %d\n", cluster, runningTasksCount)
+			if runningTasksCount == 0 {
 				return
 			}
 
@@ -213,6 +237,84 @@ func testTaskCountBelow(ctx context.Context, cluster, family string, count int) 
 				// check again
 			}
 		}
+	}
+}
 
+func testInstanceTransition(ctx context.Context, autoScalingGroupName, state string) func(t *testing.T) {
+	return func(t *testing.T) {
+		client := autoscaling.New(session.Must(session.NewSession()))
+
+		for {
+			count := 0
+
+			groups, err := client.DescribeAutoScalingGroupsWithContext(
+				ctx,
+				&autoscaling.DescribeAutoScalingGroupsInput{
+					AutoScalingGroupNames: aws.StringSlice([]string{autoScalingGroupName}),
+				},
+			)
+			assert.NoError(t, err)
+
+			var instanceIDs []*string
+			for _, instanceID := range groups.AutoScalingGroups[0].Instances {
+				instanceIDs = append(instanceIDs, instanceID.InstanceId)
+			}
+
+			instances, err := client.DescribeAutoScalingInstancesWithContext(
+				ctx,
+				&autoscaling.DescribeAutoScalingInstancesInput{
+					InstanceIds: instanceIDs,
+				},
+			)
+			assert.NoError(t, err)
+
+			for _, instance := range instances.AutoScalingInstances {
+				if aws.StringValue(instance.LifecycleState) == state {
+					count++
+				}
+			}
+
+			fmt.Printf("Instances in %s state: %d\n", state, count)
+			if count > 0 {
+				return
+			}
+
+			select {
+			case <-ctx.Done():
+				// timed out
+				return
+			case <-time.After(10 * time.Second):
+				// check again
+			}
+		}
+	}
+}
+
+func testInstanceCountBelow(ctx context.Context, autoScalingGroupName string, count int) func(t *testing.T) {
+	return func(t *testing.T) {
+		client := autoscaling.New(session.Must(session.NewSession()))
+
+		for {
+			groups, err := client.DescribeAutoScalingGroupsWithContext(
+				ctx,
+				&autoscaling.DescribeAutoScalingGroupsInput{
+					AutoScalingGroupNames: aws.StringSlice([]string{autoScalingGroupName}),
+				},
+			)
+			assert.NoError(t, err)
+
+			fmt.Printf("Auto Scaling Group %s instance count: %d\n", autoScalingGroupName, len(groups.AutoScalingGroups[0].Instances))
+			if len(groups.AutoScalingGroups[0].Instances) < count {
+				return
+			}
+
+			select {
+			case <-ctx.Done():
+				// timed out
+				return
+			case <-time.After(10 * time.Second):
+				// check again
+			}
+		}
 	}
 }
