@@ -26,6 +26,9 @@ func GetECSInstanceARN(sess client.ConfigProvider, cluster, ec2InstanceID string
 			Cluster: aws.String(cluster),
 		},
 		func(page *ecs.ListContainerInstancesOutput, lastPage bool) bool {
+			if len(page.ContainerInstanceArns) == 0 {
+				return false // nothing to do
+			}
 			var instances *ecs.DescribeContainerInstancesOutput
 			instances, innerErr = client.DescribeContainerInstances(
 				&ecs.DescribeContainerInstancesInput{

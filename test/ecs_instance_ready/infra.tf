@@ -125,8 +125,8 @@ module "asg" {
   create_lc            = false
   launch_configuration = "${aws_launch_configuration.ecs_instance.id}"
 
-  desired_capacity = 1
-  min_size         = 1
+  desired_capacity = 0
+  min_size         = 0
   max_size         = 1
 
   wait_for_capacity_timeout = 0
@@ -156,7 +156,7 @@ resource "aws_ecs_service" "test" {
   name                               = "test"
   cluster                            = "${aws_ecs_cluster.test.id}"
   task_definition                    = "${aws_ecs_task_definition.test.arn}"
-  desired_count                      = 2
+  desired_count                      = 1
   deployment_maximum_percent         = 100
   deployment_minimum_healthy_percent = 50
 }
@@ -181,4 +181,8 @@ output "step_function_arn" {
 
 output "autoscaling_group_name" {
   value = "${module.asg.this_autoscaling_group_name}"
+}
+
+output "ecs_cluster_name" {
+  value = "${aws_ecs_cluster.test.name}"
 }

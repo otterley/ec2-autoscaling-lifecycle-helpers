@@ -3,7 +3,6 @@ package ecs_instance_drainer_test
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"testing"
 	"time"
 
@@ -18,7 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestECSInstanceDrainer(t *testing.T) {
+func TestECSInstanceReady(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(20*time.Minute))
 	defer cancel()
 
@@ -33,29 +32,20 @@ func TestECSInstanceDrainer(t *testing.T) {
 	autoScalingGroupName := terraform.Output(t, tfOpts, "autoscaling_group_name")
 	ecsCluster := terraform.Output(t, tfOpts, "ecs_cluster_name")
 
-	desiredInstanceCount, err := strconv.Atoi(terraform.Output(t, tfOpts, "desired_instance_count"))
-	assert.NoError(t, err)
-
 	t.Run("Cloudwatch Event Connected",
-		testCloudwatchEventConnected(ctx, terraform.Output(t, tfOpts, "start_drainer_lambda_arn")))
+		testCloudwatchEventConnected(ctx, terraform.Output(t, tfOpts, "start_poller_lambda_arn")))
 
-	t.Run("Instance joined ECS cluster", testInstanceJoinedECSCluster(ctx, ecsCluster, desiredInstanceCount))
-
-	err = setASGDesiredCapacity(ctx, autoScalingGroupName, 1)
+	err := setASGDesiredCapacity(ctx, autoScalingGroupName, 1)
 	assert.NoError(t, err)
 
-	t.Run("Instance transitions to Terminating:Wait state", testInstanceTransition(ctx, autoScalingGroupName, "Terminating:Wait"))
+	t.Run("Instance transitions to Pending:Wait state", testInstanceTransition(ctx, autoScalingGroupName, "Pending:Wait"))
 
 	t.Run("Step Function Started",
 		testStepFunctionStarted(ctx, terraform.Output(t, tfOpts, "step_function_arn")))
 
-	t.Run("ECS Instance Starts Draining", testECSInstanceDraining(ctx, ecsCluster))
+	t.Run("Instance joined ECS cluster", testInstanceJoinedECSCluster(ctx, ecsCluster, 1))
 
-	t.Run("All tasks stopped on drained instances", testNoTasksOnDrainingInstance(ctx, ecsCluster))
-
-	t.Run("Instance transitions to Terminating:Proceed state", testInstanceTransition(ctx, autoScalingGroupName, "Terminating:Proceed"))
-
-	t.Run("Instance count reduced", testInstanceCountBelow(ctx, autoScalingGroupName, desiredInstanceCount))
+	t.Run("Instance transitions to InService state", testInstanceTransition(ctx, autoScalingGroupName, "InService"))
 }
 
 func setASGDesiredCapacity(ctx context.Context, autoScalingGroupName string, desiredCapacity int64) error {
@@ -143,103 +133,6 @@ func testStepFunctionStarted(ctx context.Context, stateMachineARN string) func(t
 	}
 }
 
-func testECSInstanceDraining(ctx context.Context, cluster string) func(t *testing.T) {
-	return func(t *testing.T) {
-		client := ecs.New(session.Must(session.NewSession()))
-
-		for {
-			var innerErr error
-			drainingCount := 0
-
-			err := client.ListContainerInstancesPagesWithContext(
-				ctx,
-				&ecs.ListContainerInstancesInput{
-					Cluster: aws.String(cluster),
-				},
-				func(page *ecs.ListContainerInstancesOutput, lastpage bool) bool {
-					var instances *ecs.DescribeContainerInstancesOutput
-					instances, innerErr = client.DescribeContainerInstancesWithContext(
-						ctx,
-						&ecs.DescribeContainerInstancesInput{
-							Cluster:            aws.String(cluster),
-							ContainerInstances: page.ContainerInstanceArns,
-						},
-					)
-					if innerErr != nil {
-						return false
-					}
-					for _, instance := range instances.ContainerInstances {
-						if aws.StringValue(instance.Status) == "DRAINING" {
-							drainingCount++
-						}
-					}
-					return !lastpage
-				},
-			)
-			assert.NoError(t, err)
-			assert.NoError(t, innerErr)
-
-			if drainingCount > 0 {
-				return
-			}
-
-			fmt.Printf("Waiting for an ECS instance in cluster %s to be set to DRAINING state\n", cluster)
-			select {
-			case <-ctx.Done():
-				// timed out
-				return
-			case <-time.After(10 * time.Second):
-				// check again
-			}
-		}
-	}
-}
-
-func testNoTasksOnDrainingInstance(ctx context.Context, cluster string) func(t *testing.T) {
-	return func(t *testing.T) {
-		client := ecs.New(session.Must(session.NewSession()))
-
-		for {
-			var runningTasksCount int64
-
-			output, err := client.ListContainerInstancesWithContext(
-				ctx,
-				&ecs.ListContainerInstancesInput{
-					Cluster: aws.String(cluster),
-					Status:  aws.String("DRAINING"),
-				},
-			)
-			assert.NoError(t, err)
-
-			tasks, err := client.DescribeContainerInstancesWithContext(
-				ctx,
-				&ecs.DescribeContainerInstancesInput{
-					Cluster:            aws.String(cluster),
-					ContainerInstances: output.ContainerInstanceArns,
-				},
-			)
-			assert.NoError(t, err)
-
-			for _, instance := range tasks.ContainerInstances {
-				runningTasksCount += aws.Int64Value(instance.RunningTasksCount)
-			}
-
-			fmt.Printf("Task count on DRAINING instances in cluster %s: %d\n", cluster, runningTasksCount)
-			if runningTasksCount == 0 {
-				return
-			}
-
-			select {
-			case <-ctx.Done():
-				// timed out
-				return
-			case <-time.After(10 * time.Second):
-				// check again
-			}
-		}
-	}
-}
-
 func testInstanceTransition(ctx context.Context, autoScalingGroupName, state string) func(t *testing.T) {
 	return func(t *testing.T) {
 		client := autoscaling.New(session.Must(session.NewSession()))
@@ -276,35 +169,6 @@ func testInstanceTransition(ctx context.Context, autoScalingGroupName, state str
 
 			fmt.Printf("Instances in %s state: %d\n", state, count)
 			if count > 0 {
-				return
-			}
-
-			select {
-			case <-ctx.Done():
-				// timed out
-				return
-			case <-time.After(10 * time.Second):
-				// check again
-			}
-		}
-	}
-}
-
-func testInstanceCountBelow(ctx context.Context, autoScalingGroupName string, count int) func(t *testing.T) {
-	return func(t *testing.T) {
-		client := autoscaling.New(session.Must(session.NewSession()))
-
-		for {
-			groups, err := client.DescribeAutoScalingGroupsWithContext(
-				ctx,
-				&autoscaling.DescribeAutoScalingGroupsInput{
-					AutoScalingGroupNames: aws.StringSlice([]string{autoScalingGroupName}),
-				},
-			)
-			assert.NoError(t, err)
-
-			fmt.Printf("Auto Scaling Group %s instance count: %d\n", autoScalingGroupName, len(groups.AutoScalingGroups[0].Instances))
-			if len(groups.AutoScalingGroups[0].Instances) < count {
 				return
 			}
 

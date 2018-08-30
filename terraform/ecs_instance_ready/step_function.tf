@@ -21,7 +21,7 @@ resource "aws_sfn_state_machine" "poller" {
                     "Next": "AlreadyRunning"
                 }
             ],
-            "Default": "CountRunningTasks"
+            "Default": "CheckReady"
         },
         "AlreadyRunning": {
             "Type": "Fail",

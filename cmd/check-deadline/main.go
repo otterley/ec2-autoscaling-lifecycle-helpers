@@ -15,7 +15,7 @@ func checkDeadline(request internal.DrainParameters) (internal.DrainParameters, 
 	if err != nil {
 		return response, errors.WithMessage(err, "time.Parse")
 	}
-	if deadline.After(time.Now()) {
+	if time.Now().After(deadline) {
 		response.PastDeadline = true
 	}
 	return response, nil
