@@ -4,6 +4,14 @@ variable "lambda_version" {
   type = "string"
 }
 
+variable "timeout" {
+  default = "5m"
+}
+
+variable "required_task_families" {
+  default = ["test"]
+}
+
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "1.37.0"
@@ -168,7 +176,8 @@ module "ready" {
 
   autoscaling_group_name = "${module.asg.this_autoscaling_group_name}"
   ecs_cluster_name       = "${aws_ecs_cluster.test.name}"
-  required_task_families = ["test"]
+  required_task_families = ["${var.required_task_families}"]
+  timeout                = "${var.timeout}"
 }
 
 output "start_poller_lambda_arn" {

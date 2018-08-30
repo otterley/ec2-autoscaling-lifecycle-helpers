@@ -5,19 +5,20 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
-	"github.com/otterley/ec2-autoscaling-lifecycle-helpers/internal"
 )
 
-func putLifecycleAction(request internal.DrainParameters) (internal.DrainParameters, error) {
+func putLifecycleAction(request map[string]interface{}) (map[string]interface{}, error) {
 	response := request
 	client := autoscaling.New(session.Must(session.NewSession()))
 
+	params := request["Params"].(map[string]interface{})
+
 	_, err := client.CompleteLifecycleAction(
 		&autoscaling.CompleteLifecycleActionInput{
-			AutoScalingGroupName:  aws.String(request.AutoScalingGroupName),
-			InstanceId:            aws.String(request.EC2InstanceID),
-			LifecycleHookName:     aws.String(request.LifecycleHookName),
-			LifecycleActionResult: aws.String(request.Params["LifecycleActionResult"]),
+			AutoScalingGroupName:  aws.String(request["AutoScalingGroupName"].(string)),
+			InstanceId:            aws.String(request["EC2InstanceId"].(string)),
+			LifecycleHookName:     aws.String(request["LifecycleHookName"].(string)),
+			LifecycleActionResult: aws.String(params["LifecycleActionResult"].(string)),
 		},
 	)
 	return response, err

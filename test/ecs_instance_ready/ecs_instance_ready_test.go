@@ -48,6 +48,39 @@ func TestECSInstanceReady(t *testing.T) {
 	t.Run("Instance transitions to InService state", testInstanceTransition(ctx, autoScalingGroupName, "InService"))
 }
 
+func TestECSInstanceNotReady(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(20*time.Minute))
+	defer cancel()
+
+	tfOpts := &terraform.Options{
+		Vars: map[string]interface{}{
+			"lambda_version":         internal.MustEnv("LAMBDA_VERSION"),
+			"timeout":                "2m",
+			"required_task_families": []string{"bogus"},
+		},
+	}
+	defer terraform.Destroy(t, tfOpts)
+	terraform.InitAndApply(t, tfOpts)
+
+	autoScalingGroupName := terraform.Output(t, tfOpts, "autoscaling_group_name")
+	ecsCluster := terraform.Output(t, tfOpts, "ecs_cluster_name")
+
+	t.Run("Cloudwatch Event Connected",
+		testCloudwatchEventConnected(ctx, terraform.Output(t, tfOpts, "start_poller_lambda_arn")))
+
+	err := setASGDesiredCapacity(ctx, autoScalingGroupName, 1)
+	assert.NoError(t, err)
+
+	t.Run("Instance transitions to Pending:Wait state", testInstanceTransition(ctx, autoScalingGroupName, "Pending:Wait"))
+
+	t.Run("Step Function Started",
+		testStepFunctionStarted(ctx, terraform.Output(t, tfOpts, "step_function_arn")))
+
+	t.Run("Instance joined ECS cluster", testInstanceJoinedECSCluster(ctx, ecsCluster, 1))
+
+	t.Run("Instance transitions to Terminating state", testInstanceTransition(ctx, autoScalingGroupName, "Terminating"))
+}
+
 func setASGDesiredCapacity(ctx context.Context, autoScalingGroupName string, desiredCapacity int64) error {
 	client := autoscaling.New(session.Must(session.NewSession()))
 	_, err := client.UpdateAutoScalingGroupWithContext(

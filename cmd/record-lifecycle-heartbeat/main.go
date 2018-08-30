@@ -5,18 +5,17 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
-	"github.com/otterley/ec2-autoscaling-lifecycle-helpers/internal"
 )
 
-func recordLifecycleHeartbeat(request internal.DrainParameters) (internal.DrainParameters, error) {
+func recordLifecycleHeartbeat(request map[string]interface{}) (map[string]interface{}, error) {
 	response := request
 	client := autoscaling.New(session.Must(session.NewSession()))
 
 	_, err := client.RecordLifecycleActionHeartbeat(
 		&autoscaling.RecordLifecycleActionHeartbeatInput{
-			AutoScalingGroupName: aws.String(request.AutoScalingGroupName),
-			InstanceId:           aws.String(request.EC2InstanceID),
-			LifecycleHookName:    aws.String(request.LifecycleHookName),
+			AutoScalingGroupName: aws.String(request["AutoScalingGroupName"].(string)),
+			InstanceId:           aws.String(request["EC2InstanceId"].(string)),
+			LifecycleHookName:    aws.String(request["LifecycleHookName"].(string)),
 		},
 	)
 	return response, err
