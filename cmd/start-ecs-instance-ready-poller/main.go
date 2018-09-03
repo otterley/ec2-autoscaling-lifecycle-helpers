@@ -15,10 +15,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-func startECSInstancePoller(event internal.StartECSReadyPollEvent) error {
+func startECSInstancePoller(event internal.CloudwatchLifecycleEvent) error {
 	var err error
 
-	params := event.Detail
+	params := internal.ECSReadyParameters{}
+	params.AutoScalingGroupName = event.Detail.AutoScalingGroupName
+	params.EC2InstanceID = event.Detail.EC2InstanceID
+	params.LifecycleActionToken = event.Detail.LifecycleActionToken
+	params.LifecycleHookName = event.Detail.LifecycleHookName
+	params.LifecycleTransition = event.Detail.LifecycleTransition
 
 	params.StateMachineARN = os.Getenv("STATE_MACHINE_ARN")
 	if params.StateMachineARN == "" {

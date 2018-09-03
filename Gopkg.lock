@@ -14,7 +14,7 @@
   version = "v1.6.0"
 
 [[projects]]
-  digest = "1:4876c6af6be1a842a2d7cea766f6defc994955d0e04bc3ea27f17cf2f52ed2ca"
+  digest = "1:fa919c5644164e6e735554f25e2f1259e764b5d01f5d02fc57e09277d8737885"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -52,8 +52,8 @@
     "service/sts",
   ]
   pruneopts = "UT"
-  revision = "4324bc9d8865bdb3e6aa86ec7772ca1272d2750e"
-  version = "v1.15.21"
+  revision = "04abd557eeaab3cfdded45467eea00fc03db9cb9"
+  version = "v1.15.26"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -72,18 +72,19 @@
   version = "v1.38.2"
 
 [[projects]]
-  digest = "1:e9c6ba1df4e7953669dd5c2b13f6ce239ce2a7e76c498504368969b3eec87821"
+  digest = "1:065a7a6b8458c700e8b3bb3dbf35ac031608e078352f90a38940a9ae232c3f67"
   name = "github.com/gruntwork-io/terratest"
   packages = [
     "modules/collections",
     "modules/logger",
     "modules/retry",
     "modules/shell",
+    "modules/ssh",
     "modules/terraform",
   ]
   pruneopts = "UT"
-  revision = "d800338b3e88d65e5a434ec9a6ab1242270edda6"
-  version = "v0.10.0"
+  revision = "1b725e7128a7a57e776463893e2ca750027cb2a1"
+  version = "v0.10.2"
 
 [[projects]]
   digest = "1:e22af8c7518e1eab6f2eab2b7d7558927f816262586cd6ed9f349c97a6c285c4"
@@ -118,11 +119,28 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:8e56f01a7d273a0c67edb531e176e93b9f27cbe567bc84213b9b5c03bcb57b78"
+  name = "golang.org/x/crypto"
+  packages = [
+    "curve25519",
+    "ed25519",
+    "ed25519/internal/edwards25519",
+    "internal/chacha20",
+    "internal/subtle",
+    "poly1305",
+    "ssh",
+    "ssh/agent",
+  ]
+  pruneopts = "UT"
+  revision = "182538f80094b6a8efaade63a8fd8e0d9d5843dd"
+
+[[projects]]
+  branch = "master"
   digest = "1:76ee51c3f468493aff39dbacc401e8831fbb765104cbf613b89bef01cf4bad70"
   name = "golang.org/x/net"
   packages = ["context"]
   pruneopts = "UT"
-  revision = "4bcd98cce591d8c7061bf313d7a3cbad05b58549"
+  revision = "8a410e7b638dca158bf9e766925842f6651ff828"
 
 [solve-meta]
   analyzer-name = "dep"

@@ -17,10 +17,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-func startECSInstanceDrainer(event internal.StartDrainEvent) error {
+func startECSInstanceDrainer(event internal.CloudwatchLifecycleEvent) error {
 	var err error
 
-	params := event.Detail
+	params := internal.DrainParameters{}
+	params.AutoScalingGroupName = event.Detail.AutoScalingGroupName
+	params.EC2InstanceID = event.Detail.EC2InstanceID
+	params.LifecycleActionToken = event.Detail.LifecycleActionToken
+	params.LifecycleHookName = event.Detail.LifecycleHookName
+	params.LifecycleTransition = event.Detail.LifecycleTransition
 
 	params.StateMachineARN = os.Getenv("STATE_MACHINE_ARN")
 	if params.StateMachineARN == "" {
