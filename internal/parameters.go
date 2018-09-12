@@ -36,3 +36,11 @@ type ECSReadyParameters struct {
 	RequiredTaskFamilies []string
 	Ready                bool
 }
+
+type KafkaReadyParameters struct {
+	AutoScalingLifecycleEvent
+	BaseParameters
+	InternalIPAddr string
+	KafkaPort      int
+	Ready          bool
+}

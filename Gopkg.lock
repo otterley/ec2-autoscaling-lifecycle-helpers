@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:aef23e9ea9f154b965b9792e32c86f315c2c689883ead4eeca8a182f6edfdfbc"
+  name = "github.com/Shopify/sarama"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a6144ae922fd99dd0ea5046c8137acfb7fab0914"
+  version = "v1.18.0"
+
+[[projects]]
   digest = "1:7637de64e2bad97a7b9d1665e9cb0f9b709b1ef28d09232da908ead542bf89f0"
   name = "github.com/aws/aws-lambda-go"
   packages = [
@@ -14,7 +22,7 @@
   version = "v1.6.0"
 
 [[projects]]
-  digest = "1:fa919c5644164e6e735554f25e2f1259e764b5d01f5d02fc57e09277d8737885"
+  digest = "1:8a1edccab742cbf25a92be6f29262fabd163e98463db198093b45e5c974e1104"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -39,6 +47,7 @@
     "internal/sdkuri",
     "internal/shareddefaults",
     "private/protocol",
+    "private/protocol/ec2query",
     "private/protocol/json/jsonutil",
     "private/protocol/jsonrpc",
     "private/protocol/query",
@@ -47,13 +56,14 @@
     "private/protocol/xml/xmlutil",
     "service/autoscaling",
     "service/cloudwatchevents",
+    "service/ec2",
     "service/ecs",
     "service/sfn",
     "service/sts",
   ]
   pruneopts = "UT"
-  revision = "04abd557eeaab3cfdded45467eea00fc03db9cb9"
-  version = "v1.15.26"
+  revision = "1186f7e6f000ce13edff71ed5ecc8b0e27ba38d7"
+  version = "v1.15.33"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -64,12 +74,44 @@
   version = "v1.1.1"
 
 [[projects]]
+  digest = "1:1f0c7ab489b407a7f8f9ad16c25a504d28ab461517a971d341388a56156c1bd7"
+  name = "github.com/eapache/go-resiliency"
+  packages = ["breaker"]
+  pruneopts = "UT"
+  revision = "ea41b0fad31007accc7f806884dcdf3da98b79ce"
+  version = "v1.1.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:79f16588b5576b1b3cd90e48d2374cc9a1a8776862d28d8fd0f23b0e15534967"
+  name = "github.com/eapache/go-xerial-snappy"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "776d5712da21bc4762676d614db1d8a64f4238b0"
+
+[[projects]]
+  digest = "1:444b82bfe35c83bbcaf84e310fb81a1f9ece03edfed586483c869e2c046aef69"
+  name = "github.com/eapache/queue"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "44cc805cf13205b55f69e14bcb69867d1ae92f98"
+  version = "v1.1.0"
+
+[[projects]]
   digest = "1:5abd6a22805b1919f6a6bca0ae58b13cef1f3412812f38569978f43ef02743d4"
   name = "github.com/go-ini/ini"
   packages = ["."]
   pruneopts = "UT"
   revision = "5cf292cae48347c2490ac1a58fe36735fb78df7e"
   version = "v1.38.2"
+
+[[projects]]
+  branch = "master"
+  digest = "1:4a0c6bb4805508a6287675fac876be2ac1182539ca8a32468d8128882e9d5009"
+  name = "github.com/golang/snappy"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "2e65f85255dbc3072edf28d6b5b8efc472979f5a"
 
 [[projects]]
   digest = "1:065a7a6b8458c700e8b3bb3dbf35ac031608e078352f90a38940a9ae232c3f67"
@@ -83,8 +125,8 @@
     "modules/terraform",
   ]
   pruneopts = "UT"
-  revision = "1b725e7128a7a57e776463893e2ca750027cb2a1"
-  version = "v0.10.2"
+  revision = "a15ba014670eba35acd60b1c0f295d43bf150a84"
+  version = "v0.10.3"
 
 [[projects]]
   digest = "1:e22af8c7518e1eab6f2eab2b7d7558927f816262586cd6ed9f349c97a6c285c4"
@@ -92,6 +134,17 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "0b12d6b5"
+
+[[projects]]
+  digest = "1:4f0885b3f0dba96128a09a6f4b4231c42688fbd05f323224c6aa5adc9f4e87bf"
+  name = "github.com/pierrec/lz4"
+  packages = [
+    ".",
+    "internal/xxh32",
+  ]
+  pruneopts = "UT"
+  revision = "bb6bfd13c6a262f1943c0446eb25b7f54c1fb9a2"
+  version = "v2.0.6"
 
 [[projects]]
   digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
@@ -110,6 +163,14 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:c4556a44e350b50a490544d9b06e9fba9c286c21d6c0e47f54f3a9214597298c"
+  name = "github.com/rcrowley/go-metrics"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "e2704e165165ec55d062f5919b4b29494e9fa790"
+
+[[projects]]
   digest = "1:18752d0b95816a1b777505a97f71c7467a8445b8ffb55631a7bf779f6ba4fa83"
   name = "github.com/stretchr/testify"
   packages = ["assert"]
@@ -119,7 +180,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8e56f01a7d273a0c67edb531e176e93b9f27cbe567bc84213b9b5c03bcb57b78"
+  digest = "1:5bfe7889c6059903d067d47a0a66f07a0851f47fd38f0ba5c77f402fb3d46a2d"
   name = "golang.org/x/crypto"
   packages = [
     "curve25519",
@@ -132,7 +193,7 @@
     "ssh/agent",
   ]
   pruneopts = "UT"
-  revision = "182538f80094b6a8efaade63a8fd8e0d9d5843dd"
+  revision = "0e37d006457bf46f9e6692014ba72ef82c33022c"
 
 [[projects]]
   branch = "master"
@@ -140,18 +201,20 @@
   name = "golang.org/x/net"
   packages = ["context"]
   pruneopts = "UT"
-  revision = "8a410e7b638dca158bf9e766925842f6651ff828"
+  revision = "26e67e76b6c3f6ce91f7c52def5af501b4e0f3a2"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/Shopify/sarama",
     "github.com/aws/aws-lambda-go/lambda",
     "github.com/aws/aws-sdk-go/aws",
     "github.com/aws/aws-sdk-go/aws/client",
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/autoscaling",
     "github.com/aws/aws-sdk-go/service/cloudwatchevents",
+    "github.com/aws/aws-sdk-go/service/ec2",
     "github.com/aws/aws-sdk-go/service/ecs",
     "github.com/aws/aws-sdk-go/service/sfn",
     "github.com/gruntwork-io/terratest/modules/terraform",
